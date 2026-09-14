@@ -1,6 +1,26 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const API_URL = 'https://autoppc-backend.onrender.com';
 
@@ -11,13 +31,12 @@ export default function Dashboard() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [page, setPage] = useState('dashboard');
 
   useEffect(() => {
     if (token) {
       fetchUser();
       fetchCampaigns();
-      // fetchSubscription(); // DISABLED TEMPORARILY
-      setPage('dashboard');
     }
   }, [token]);
 
@@ -42,18 +61,6 @@ export default function Dashboard() {
       console.error('Error fetching campaigns:', err);
     }
   };
-
-  // DISABLED TEMPORARILY - CAUSING 500 ERROR
-  // const fetchSubscription = async () => {
-  //   try {
-  //     const response = await axios.get(`${API_URL}/api/payments/subscription`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     setSubscription(response.data.subscription);
-  //   } catch (err) {
-  //     console.error('Error fetching subscription:', err);
-  //   }
-  // };
 
   const handleUploadCSV = async () => {
     if (!file) {
@@ -92,7 +99,6 @@ export default function Dashboard() {
     window.location.reload();
   };
 
-  // Calculate stats
   const stats = {
     totalCampaigns: campaigns.length,
     totalSpend: campaigns.reduce((sum, c) => sum + (parseFloat(c.budget) || 0), 0),
@@ -102,16 +108,51 @@ export default function Dashboard() {
     potentialSavings: campaigns.reduce((sum, c) => sum + (parseFloat(c.budget) || 0), 0) * 0.15
   };
 
-  // Mock trend data
-  const trendData = [
-    { date: 'Mon', spend: 145, acos: 28 },
-    { date: 'Tue', spend: 182, acos: 26 },
-    { date: 'Wed', spend: 198, acos: 24 },
-    { date: 'Thu', spend: 175, acos: 25 },
-    { date: 'Fri', spend: 212, acos: 23 },
-    { date: 'Sat', spend: 195, acos: 24 },
-    { date: 'Sun', spend: 168, acos: 27 }
-  ];
+  const trendData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        label: 'Spend ($)',
+        data: [145, 182, 198, 175, 212, 195, 168],
+        borderColor: '#0066CC',
+        backgroundColor: 'rgba(0, 102, 204, 0.1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true
+      }
+    ]
+  };
+
+  const acosData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        label: 'ACoS (%)',
+        data: [28, 26, 24, 25, 23, 24, 27],
+        borderColor: '#ff9800',
+        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  };
 
   const getCampaignHealth = (acos) => {
     const acosVal = parseFloat(acos) || 0;
@@ -121,15 +162,12 @@ export default function Dashboard() {
     return { label: 'Needs Work', color: '#ff6b6b', bg: '#ffebee' };
   };
 
-  const [page, setPage] = useState('dashboard');
-
   if (!token || !user) {
     return <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>;
   }
 
   return (
     <div style={{ background: '#fafafa', minHeight: '100vh' }}>
-      {/* Navigation */}
       <nav style={{ background: 'white', borderBottom: '2px solid #0066CC', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ color: '#0066CC', margin: 0, fontSize: '28px' }}>AutoPPC</h1>
@@ -215,32 +253,14 @@ export default function Dashboard() {
         {/* Charts */}
         {campaigns.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', marginBottom: '2rem' }}>
-            {/* Spending Trend */}
             <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
               <h3 style={{ marginTop: 0, color: '#0066CC' }}>💰 Spending Trend</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="spend" stroke="#0066CC" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              <Line data={trendData} options={chartOptions} />
             </div>
 
-            {/* ACoS Trend */}
             <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
               <h3 style={{ marginTop: 0, color: '#0066CC' }}>📈 ACoS Trend</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="acos" stroke="#ff9800" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              <Line data={acosData} options={chartOptions} />
             </div>
           </div>
         )}
@@ -315,7 +335,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Footer */}
         <div style={{ marginTop: '3rem', textAlign: 'center', color: '#999', fontSize: '12px' }}>
           <p>AutoPPC • Automated Amazon PPC Management</p>
         </div>
