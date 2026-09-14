@@ -16,6 +16,8 @@ export default function Dashboard() {
     if (token) {
       fetchUser();
       fetchCampaigns();
+      // fetchSubscription(); // DISABLED TEMPORARILY
+      setPage('dashboard');
     }
   }, [token]);
 
@@ -40,6 +42,18 @@ export default function Dashboard() {
       console.error('Error fetching campaigns:', err);
     }
   };
+
+  // DISABLED TEMPORARILY - CAUSING 500 ERROR
+  // const fetchSubscription = async () => {
+  //   try {
+  //     const response = await axios.get(`${API_URL}/api/payments/subscription`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     setSubscription(response.data.subscription);
+  //   } catch (err) {
+  //     console.error('Error fetching subscription:', err);
+  //   }
+  // };
 
   const handleUploadCSV = async () => {
     if (!file) {
@@ -106,6 +120,8 @@ export default function Dashboard() {
     if (acosVal < 40) return { label: 'Fair', color: '#ff9800', bg: '#fff3e0' };
     return { label: 'Needs Work', color: '#ff6b6b', bg: '#ffebee' };
   };
+
+  const [page, setPage] = useState('dashboard');
 
   if (!token || !user) {
     return <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>;
@@ -248,7 +264,7 @@ export default function Dashboard() {
                   {campaigns.map(campaign => {
                     const health = getCampaignHealth(campaign.acos);
                     return (
-                      <tr key={campaign.id} style={{ borderBottom: '1px solid #eee', hover: { background: '#fafafa' } }}>
+                      <tr key={campaign.id} style={{ borderBottom: '1px solid #eee' }}>
                         <td style={{ padding: '1rem' }}>
                           <strong>{campaign.campaign_name}</strong>
                         </td>
