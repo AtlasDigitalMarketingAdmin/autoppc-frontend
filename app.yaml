@@ -1,0 +1,11 @@
+name: autoppc-frontend
+services:
+- name: web
+  github:
+    repo: AtlasDigitalMarketingAdmin/autoppc-frontend
+    branch: main
+  build_command: npm run build
+  http_port: 8080
+  envs:
+  - key: VITE_API_URL
+    value: https://autoppc-backend-xxxx.ondigitalocean.app
