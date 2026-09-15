@@ -22,7 +22,7 @@ ChartJS.register(
   Legend
 );
 
-const API_URL = 'https://autoppc-backend.onrender.com';
+const API_URL = 'https://shark-app-vyjis.ondigitalocean.app';
 
 export default function Dashboard() {
   const [token, setToken] = useState(localStorage.getItem('token'));
